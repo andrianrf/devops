@@ -1,0 +1,90 @@
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: oracle-db-pv
+# spec:
+#   capacity:
+#     storage: 10Gi
+#   accessModes:
+#     - ReadWriteMany
+#   persistentVolumeReclaimPolicy: Retain
+#   storageClassName: "hostpath"
+#   hostPath:
+#     path: "/d/docker-volume/oracle-xe/oradata"
+
+# ---
+
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: oracle-db-pvc
+# spec:
+#   accessModes:
+#     - ReadWriteMany
+#   volumeMode: Filesystem
+#   resources:
+#     requests:
+#       storage: 5Gi
+#   # volumeName: oracle-db-pv
+#   storageClassName: "hostpath"
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: oracle-db
+  name: oracle-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oracle-db
+  template:
+    metadata:
+      labels:
+        app: oracle-db
+    spec:
+      containers:
+      - image: container-registry.oracle.com/database/express:18.4.0-xe
+        imagePullPolicy: IfNotPresent
+        name: oracle-db
+        ports:
+        - containerPort: 1521
+          protocol: TCP
+          name: "db"
+        resources: {}
+        volumeMounts:
+          - mountPath: /opt/oracle/oradata
+            name: oracle-db-pvc
+        env:
+          - name: "ORACLE_SID"
+            value: "XE"
+          - name: "ORACLE_PWD"
+            value: "P4ssw0rd"
+          - name: "ORACLE_CHARACTERSET"
+            value: "AL32UTF8"
+      volumes:
+        - name: oracle-db-pvc
+          hostPath:
+            path: /d/docker-volume/oracle-xe/oradata
+            type: Directory
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  name: oracle-db
+  labels:
+    app: oracle-db
+spec:
+  type: ClusterIP
+  ports:
+    - name: "db"
+      protocol: TCP
+      port: 1521
+      targetPort: 1521
+  selector:
+    app: oracle-db

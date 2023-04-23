@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: bpjstk-simulator
+  name: bpjstk-simulator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bpjstk-simulator
+  template:
+    metadata:
+      labels:
+        app: bpjstk-simulator
+    spec:
+      containers:
+        - image: andrianrf/bpjstk-simulator:latest
+          imagePullPolicy: IfNotPresent
+          name: bpjstk-simulator
+          ports:
+            - containerPort: 8090
+          envFrom:
+            - configMapRef:
+                name: bpjstk-cm
+          resources:
+            requests:
+              memory: "0Mi"
+              cpu: "0m"
+            limits:
+              memory: "300Mi"
+              cpu: "250m"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8090
+            initialDelaySeconds: 195
+            periodSeconds: 15
+            failureThreshold: 3
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: bpjstk-simulator
+  labels:
+    app: bpjstk-simulator
+spec:
+  type: ClusterIP
+  selector:
+    app: bpjstk-simulator
+  ports:
+    - name: 8090-tcp
+      protocol: TCP
+      port: 8090
+      targetPort: 8090

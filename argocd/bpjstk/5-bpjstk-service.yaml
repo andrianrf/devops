@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: bpjstk-service
+  name: bpjstk-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bpjstk-service
+  template:
+    metadata:
+      labels:
+        app: bpjstk-service
+    spec:
+      containers:
+        - image: andrianrf/bpjstk-service:latest
+          imagePullPolicy: IfNotPresent
+          name: bpjstk-service
+          ports:
+            - containerPort: 8091
+          envFrom:
+            - configMapRef:
+                name: bpjstk-cm
+          env:
+            - name: "bpjstkUri"
+              value: "http://bpjstk-simulator:8090/ws"
+            - name: "bpjstkUsername"
+              value: "admin"
+            - name: "bpjstkPassword"
+              value: "password"
+            - name: "vlinkUrl"
+              value: "http://iso-client:8100/pembayaran-bpjstk"
+            - name: "vlinkAccountAdminFee"
+              value: "11111111111"
+            - name: "vlinkAccountJht"
+              value: "22222222222"
+            - name: "vlinkAccountJkk"
+              value: "33333333333"
+            - name: "vlinkAccountJkm"
+              value: "44444444444"
+            - name: "vlinkAccountJpk"
+              value: "55555555555"
+            - name: "vlinkAccountJpn"
+              value: "66666666666"
+            - name: "vlinkNoteTotalIuran"
+              value: "Total Iuran BPJSTK"
+            - name: "vlinkNoteAdminFee"
+              value: "Admin Fee Bank BPJSTK"
+            - name: "vlinkNoteJht"
+              value: "Iuran JHT BPJSTK"
+            - name: "vlinkNoteJkk"
+              value: "Iuran JKK BPJSTK"
+            - name: "vlinkNoteJkm"
+              value: "Iuran JKM BPJSTK"
+            - name: "vlinkNoteJpk"
+              value: "Iuran JPK BPJSTK"
+            - name: "vlinkNoteJpn"
+              value: "Iuran JPN BPJSTK"
+            - name: "springJpaHibernateDdlAuto"
+              value: "none"
+          resources:
+            requests:
+              memory: "0Mi"
+              cpu: "0m"
+            limits:
+              memory: "300Mi"
+              cpu: "250m"
+          readinessProbe:
+            httpGet:
+              path: /bpjstk-service/actuator/health
+              port: 8091
+            initialDelaySeconds: 195
+            periodSeconds: 15
+            failureThreshold: 3
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: bpjstk-service
+  labels:
+    app: bpjstk-service
+spec:
+  type: ClusterIP
+  selector:
+    app: bpjstk-service
+  ports:
+    - name: 8091-tcp
+      protocol: TCP
+      port: 8091
+      targetPort: 8091
