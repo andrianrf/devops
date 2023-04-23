@@ -6,7 +6,7 @@ resources:
 # - 1-oracle-db.yaml
 - 2-bpjstk-simulator.yaml
 - 3-iso-server.yaml
-# - 4-iso-client.yaml
+- 4-iso-client.yaml
 # - 5-bpjstk-service.yaml
 # - 6-backoffice-be.yaml
 # - 7-backoffice.yaml
